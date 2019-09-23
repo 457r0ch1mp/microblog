@@ -11,7 +11,6 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
     posts = db.relationship('Post', backref='author', lazy='dynamic')
 
-
     def __repr__(self):
         return '<User {}>'.format(self.username)
 
