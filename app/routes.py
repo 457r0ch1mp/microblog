@@ -18,7 +18,6 @@ def before_request():
 @app.route('/index')
 @login_required
 def index():
-    user = {'username': 'Cody'}
     posts = [
         {
             'author': {'username': 'John'},
