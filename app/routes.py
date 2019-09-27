@@ -171,7 +171,7 @@ def reset_password_request():
                            title='Reset Password', form=form)
 
 
-@app.route('/reset_password', methods=['GET', 'POST'])
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     if current_user.is_authenticated:
         return redirect(url_for('index'))
