@@ -1,8 +1,8 @@
 import sys, os, base64, datetime, hashlib, hmac
 import json
 import requests
+from flask import current_app
 from flask_babel import _
-from app import app
 
 
 def translate(text, source_language, dest_language):
@@ -12,16 +12,18 @@ def translate(text, source_language, dest_language):
     # Python can read the AWS access key from environment variables or the configuration file. 
     # In this example, keys are stored in environment variables. As a best practice, do not 
     # embed credentials in code.
-    if 'AWS_ACCESS_KEY_ID' not in app.config or \
-            not app.config['AWS_ACCESS_KEY_ID'] or \
-            'AWS_SECRET_ACCESS_KEY' not in app.config or \
-            not app.config['AWS_SECRET_ACCESS_KEY']:
+    if 'AWS_ACCESS_KEY_ID' not in current_app.config or \
+            not current_app.config['AWS_ACCESS_KEY_ID'] or \
+            'AWS_SECRET_ACCESS_KEY' not in current_app.config or \
+            not current_app.config['AWS_SECRET_ACCESS_KEY']:
         return _('Error: the translation service is not configured.')
 
     # ************* REQUEST VALUES *************
+    access_key = current_app.config['AWS_ACCESS_KEY_ID']
+    secret_key = current_app.config['AWS_SECRET_ACCESS_KEY']
     method = 'POST'
     service = 'translate'
-    region = app.config['AWS_DEFAULT_REGION']
+    region = current_app.config['AWS_DEFAULT_REGION']
     host = service + '.' + region + '.amazonaws.com'
     endpoint = 'https://' + host + '/'
     content_type = 'application/x-amz-json-1.1'
@@ -60,11 +62,11 @@ def translate(text, source_language, dest_language):
     string_to_sign = algorithm + '\n' +  amz_date + '\n' +  credential_scope + '\n' +  hashlib.sha256(canonical_request.encode('utf-8')).hexdigest()
 
     # ************* TASK 3: CALCULATE THE SIGNATURE *************
-    signing_key = getSignatureKey(app.config['AWS_SECRET_ACCESS_KEY'], date_stamp, region, service)
+    signing_key = getSignatureKey(secret_key, date_stamp, region, service)
     signature = hmac.new(signing_key, (string_to_sign).encode('utf-8'), hashlib.sha256).hexdigest()
 
     # ************* TASK 4: ADD SIGNING INFORMATION TO THE REQUEST *************
-    authorization_header = algorithm + ' ' + 'Credential=' + app.config['AWS_ACCESS_KEY_ID'] + '/' + credential_scope + ', ' +  'SignedHeaders=' + signed_headers + ', ' + 'Signature=' + signature
+    authorization_header = algorithm + ' ' + 'Credential=' + access_key + '/' + credential_scope + ', ' +  'SignedHeaders=' + signed_headers + ', ' + 'Signature=' + signature
     headers = {'Content-Type':content_type,
            'X-Amz-Date':amz_date,
            'X-Amz-Target':amz_target,
